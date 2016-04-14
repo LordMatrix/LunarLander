@@ -12,6 +12,7 @@
 #include <ESAT/math.h>
 #include <ESAT/time.h>
 #include "ESAT_extra/chipmunk/chipmunk.h"
+#include "config.h"
 
 class Ship {
   public:
@@ -20,6 +21,7 @@ class Ship {
     virtual ~Ship();
     
     void assignRegularPolygon(int num_vertices, float radius, MathLib::Vec2 position_offset, float rotation_offset, std::vector<MathLib::Vec2>& buffer, int* counter);
+    void update();
     void move();
     void drawThruster();
     void draw();
@@ -40,6 +42,9 @@ class Ship {
     
     bool landed_;
     bool crashed_;
+    bool exploding_;
+    
+    float explosion_time_;
     
     std::vector<MathLib::Vec2> cvertices_;
     int num_cvertices_;

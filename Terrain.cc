@@ -141,6 +141,7 @@ void Terrain::createWalls() {
       cpShapeSetCollisionType(ground, GROUND_TYPE);
     }
     
+    cpShapeSetFriction(ground, 1.0f);
     cpSpaceAddShape(space_, ground);
   }
 }

@@ -3,9 +3,11 @@
 Ship::Ship() {
   pos_ = {200.0f, 200.0f};
   velocity_ = {0.25f, -1.0f};
-  fuel_ = 650.0f;
+  fuel_ = 100.0f;
   landed_ = false;
   crashed_ = false;
+  exploding_ = false;
+  explosion_time_ = 0.0f;
 }
 
 
@@ -33,11 +35,48 @@ void Ship::assignRegularPolygon(int num_vertices, float radius, MathLib::Vec2 po
 }
 
 
+void Ship::update() {
+  if (!landed_) {
+    move();
+  } else {
+    if (crashed_) {
+      if (exploding_) {
+//        float elapsed = ESAT::Time() - explosion_time_;
+        explosion_time_++;
+        int num_particles = 20;
+        float x,y;
+        float angle = MathLib::rads(360/num_particles);
+        
+        for (int i=0; i<num_particles; i++) {
+          x = pos_.x + cos(angle*i) * explosion_time_*2;
+          y = pos_.y + sin(angle*i) * explosion_time_*2;
+//          printf("%f, %f\n",x,y);
+          ESAT::DrawSetStrokeColor(255,255,255);
+          
+          ESAT::DrawLine(x,y,x+2,y+2);
+          
+          
+          ESAT::DrawSetTextSize(40.0f);
+          ESAT::DrawText(kWinWidth/4, kWinHeight/3, "The module has crashed");
+          ESAT::DrawSetTextSize(20.0f);
+          ESAT::DrawText(kWinWidth/4, kWinHeight/2.5, "Press space to retry");
+        }
+        
+      } else {
+        exploding_ = true;
+        thrusting_ = false;
+        explosion_time_ = 0.0f;
+      }
+    }
+  }
+}
+
+
 void Ship::move() {
   thrusting_ = false;
   
   //Listen for launch
-  if (ESAT::IsSpecialKeyPressed(ESAT::kSpecialKey_Up)) {
+  if (ESAT::IsSpecialKeyPressed(ESAT::kSpecialKey_Up) && fuel_>0.0f) {
     
     cpVect force = {0.0f, -0.02f};
     cpVect impulse_point = {0.0f, 5.0f};
@@ -157,7 +196,7 @@ void Ship::setPhysics() {
   cpPolyShapeNew(physics_body_, num_tvertices_, verts, transform, 1.0f);
   
   cpShapeSetElasticity(sbox, 0);
-  cpShapeSetFriction(sbox, 0.8f);
+  cpShapeSetFriction(sbox, 1.0f);
   cpShapeSetMass(sbox, 1);
   
   cpVect position = {pos_.x, pos_.y};

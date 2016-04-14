@@ -127,17 +127,12 @@ cpBool OnCollisionEnter(cpArbiter *arb, cpSpace *space, void *data) {
 }
 
 
-int ESAT::main(int argc, char **argv) {
-  
+void startGame(cpSpace* space, Ship* ship, Terrain* terrain, Colliders* colliders) {
   srand(time(NULL));
   
-  
-  
-  cpSpace* space = cpSpaceNew();
+//  space = cpSpaceNew();
   cpSpaceSetGravity(space, cpv(0, 0.0098f));
   
-  
-  Ship* ship = new Ship();
   ship->space_ = space;
   MathLib::Vec2 offset = {0.0f, 0.0f};
   ship->assignRegularPolygon(20, 10, offset, 0, ship->cvertices_, &ship->num_cvertices_);
@@ -145,10 +140,28 @@ int ESAT::main(int argc, char **argv) {
   ship->assignRegularPolygon(3, 10, offset, 225, ship->tvertices_, &ship->num_tvertices_);
   ship->setPhysics();
   
-  Terrain* terrain = new Terrain();
   terrain->space_ = space;
   terrain->generate();
   terrain->createWalls();
+  
+  colliders->ship = ship;
+  colliders->terrain = terrain;
+  
+  //Set up default collision handler
+  cpCollisionHandler* handler = cpSpaceAddDefaultCollisionHandler(space);
+  handler->beginFunc = OnCollisionEnter;
+  handler->userData = colliders;
+}
+
+
+int ESAT::main(int argc, char **argv) {
+  
+  cpSpace* space = cpSpaceNew();
+  Ship* ship = new Ship();
+  Terrain* terrain = new Terrain();
+  Colliders* colliders = (Colliders*)malloc(sizeof(Colliders));
+  
+  startGame(space, ship, terrain, colliders);
   
   ESAT::WindowInit(WindowOptions.width, WindowOptions.height);
   
@@ -160,15 +173,7 @@ int ESAT::main(int argc, char **argv) {
   
   double last_time = ESAT::Time();
   
-  Colliders* colliders = (Colliders*)malloc(sizeof(Colliders));
-  colliders->ship = ship;
-  colliders->terrain = terrain;
   
-  //Set up default collision handler
-  cpCollisionHandler* handler = cpSpaceAddDefaultCollisionHandler(space);
-  handler->beginFunc = OnCollisionEnter;
-  handler->userData = colliders;
-
   while(ESAT::WindowIsOpened() && !ESAT::IsSpecialKeyDown(ESAT::kSpecialKey_Escape)) {
 
     /****************SIMULATION****************/
@@ -184,13 +189,17 @@ int ESAT::main(int argc, char **argv) {
     ship->pos_.y = cpBodyGetPosition(ship->physics_body_).y;
     /*****************************************/
     
+    if (ship->exploding_ && ESAT::IsSpecialKeyPressed(ESAT::kSpecialKey_Space)) {
+      startGame(space, ship, terrain, colliders);
+    }
     
     ESAT::DrawBegin();
     ESAT::DrawClear(255,255,255);
   
-    ship->move();
-    
     ESAT::DrawSprite(bg, 0, 0);
+    
+    ship->update();
+    
     drawInfo(ship);
     
     terrain->draw();

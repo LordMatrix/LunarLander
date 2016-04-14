@@ -28,3 +28,4 @@
 *.app
 /dist/
 build
+.dep.inc
