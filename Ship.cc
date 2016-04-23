@@ -41,7 +41,6 @@ void Ship::update() {
   } else {
     if (crashed_) {
       if (exploding_) {
-//        float elapsed = ESAT::Time() - explosion_time_;
         explosion_time_++;
         int num_particles = 20;
         float x,y;
@@ -50,11 +49,9 @@ void Ship::update() {
         for (int i=0; i<num_particles; i++) {
           x = pos_.x + cos(angle*i) * explosion_time_*2;
           y = pos_.y + sin(angle*i) * explosion_time_*2;
-//          printf("%f, %f\n",x,y);
-          ESAT::DrawSetStrokeColor(255,255,255);
-          
+
+          ESAT::DrawSetStrokeColor(255,255,255);          
           ESAT::DrawLine(x,y,x+2,y+2);
-          
           
           ESAT::DrawSetTextSize(40.0f);
           ESAT::DrawText(kWinWidth/4, kWinHeight/3, "The module has crashed");
@@ -67,6 +64,11 @@ void Ship::update() {
         thrusting_ = false;
         explosion_time_ = 0.0f;
       }
+    } else {
+      ESAT::DrawSetTextSize(40.0f);
+      ESAT::DrawText(kWinWidth/4, kWinHeight/3, "The module has landed");
+      ESAT::DrawSetTextSize(20.0f);
+      ESAT::DrawText(kWinWidth/4, kWinHeight/2.5, "Press space to fly again");
     }
   }
 }

@@ -9,6 +9,8 @@
 #include <iostream>
 #include "time.h"
 #include "Ship.h"
+
+#define STB_PERLIN_IMPLEMENTATION
 #include "Terrain.h"
  
 #include "ESAT_extra/chipmunk/chipmunk.h"
@@ -29,6 +31,11 @@ typedef struct {
   
 int g_score = 0;
 float g_time = 0.0f;
+
+cpSpace* g_space = nullptr;
+Ship* g_ship = nullptr;
+Terrain* g_terrain = nullptr;
+Colliders* g_colliders = nullptr;
 
 
 void drawInfo(Ship* ship) {
@@ -73,8 +80,6 @@ cpBool OnCollisionEnter(cpArbiter *arb, cpSpace *space, void *data) {
     cpBody* s = ship->physics_body_;
     cpVect velocity = cpBodyGetVelocity(s);
     cpVect rotation = cpBodyGetRotation(s);
-    printf("Vx = %f\n Vy = %f\n", velocity.x, velocity.y);
-    printf("Rx = %f\n Ry = %f\n", rotation.x, rotation.y);
     ship->landed_ = true;
     
     float velocity_threshold = 0.9f;
@@ -103,8 +108,6 @@ cpBool OnCollisionEnter(cpArbiter *arb, cpSpace *space, void *data) {
         for (int i=0; i < terrain->landings_.size() && landing==nullptr; i++) {
           
           for (int j=0; j < terrain->landings_[i].shapes.size() && landing==nullptr; j++) {
-            
-//            printf("land: %p\n",terrain->landings_[i].shapes[j]);
           
             if (terrain->landings_[i].shapes[j] == a || terrain->landings_[i].shapes[j] == b) {
               landing = &terrain->landings_[i];
@@ -127,41 +130,41 @@ cpBool OnCollisionEnter(cpArbiter *arb, cpSpace *space, void *data) {
 }
 
 
-void startGame(cpSpace* space, Ship* ship, Terrain* terrain, Colliders* colliders) {
+void startGame() {
   srand(time(NULL));
   
+  g_space = cpSpaceNew();
+  g_ship = new Ship();
+  g_terrain = new Terrain();
+  g_colliders = (Colliders*)malloc(sizeof(Colliders));
+  
 //  space = cpSpaceNew();
-  cpSpaceSetGravity(space, cpv(0, 0.0098f));
+  cpSpaceSetGravity(g_space, cpv(0, 0.0098f));
   
-  ship->space_ = space;
+  g_ship->space_ = g_space;
   MathLib::Vec2 offset = {0.0f, 0.0f};
-  ship->assignRegularPolygon(20, 10, offset, 0, ship->cvertices_, &ship->num_cvertices_);
+  g_ship->assignRegularPolygon(20, 10, offset, 0, g_ship->cvertices_, &g_ship->num_cvertices_);
   offset.y = 5.0f;
-  ship->assignRegularPolygon(3, 10, offset, 225, ship->tvertices_, &ship->num_tvertices_);
-  ship->setPhysics();
+  g_ship->assignRegularPolygon(3, 10, offset, 225, g_ship->tvertices_, &g_ship->num_tvertices_);
+  g_ship->setPhysics();
   
-  terrain->space_ = space;
-  terrain->generate();
-  terrain->createWalls();
+  g_terrain->space_ = g_space;
+  g_terrain->generate();
+  g_terrain->createWalls();
   
-  colliders->ship = ship;
-  colliders->terrain = terrain;
+  g_colliders->ship = g_ship;
+  g_colliders->terrain = g_terrain;
   
   //Set up default collision handler
-  cpCollisionHandler* handler = cpSpaceAddDefaultCollisionHandler(space);
+  cpCollisionHandler* handler = cpSpaceAddDefaultCollisionHandler(g_space);
   handler->beginFunc = OnCollisionEnter;
-  handler->userData = colliders;
+  handler->userData = g_colliders;
 }
 
 
 int ESAT::main(int argc, char **argv) {
   
-  cpSpace* space = cpSpaceNew();
-  Ship* ship = new Ship();
-  Terrain* terrain = new Terrain();
-  Colliders* colliders = (Colliders*)malloc(sizeof(Colliders));
-  
-  startGame(space, ship, terrain, colliders);
+  startGame();
   
   ESAT::WindowInit(WindowOptions.width, WindowOptions.height);
   
@@ -174,6 +177,7 @@ int ESAT::main(int argc, char **argv) {
   double last_time = ESAT::Time();
   
   
+  
   while(ESAT::WindowIsOpened() && !ESAT::IsSpecialKeyDown(ESAT::kSpecialKey_Escape)) {
 
     /****************SIMULATION****************/
@@ -181,16 +185,16 @@ int ESAT::main(int argc, char **argv) {
     double delta = (tick - last_time) * 0.1f;
     last_time = ESAT::Time();
     
-    cpSpaceStep(space, delta);
+    cpSpaceStep(g_space, delta);
     
     
     
-    ship->pos_.x = cpBodyGetPosition(ship->physics_body_).x;
-    ship->pos_.y = cpBodyGetPosition(ship->physics_body_).y;
+    g_ship->pos_.x = cpBodyGetPosition(g_ship->physics_body_).x;
+    g_ship->pos_.y = cpBodyGetPosition(g_ship->physics_body_).y;
     /*****************************************/
     
-    if (ship->exploding_ && ESAT::IsSpecialKeyPressed(ESAT::kSpecialKey_Space)) {
-      startGame(space, ship, terrain, colliders);
+    if ((g_ship->exploding_ || g_ship->landed_)  && ESAT::IsSpecialKeyPressed(ESAT::kSpecialKey_Space)) {
+      startGame();
     }
     
     ESAT::DrawBegin();
@@ -198,12 +202,12 @@ int ESAT::main(int argc, char **argv) {
   
     ESAT::DrawSprite(bg, 0, 0);
     
-    ship->update();
+    g_ship->update();
     
-    drawInfo(ship);
+    drawInfo(g_ship);
     
-    terrain->draw();
-    ship->draw();
+    g_terrain->draw();
+    g_ship->draw();
     
     
     ESAT::DrawEnd();

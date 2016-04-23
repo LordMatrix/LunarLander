@@ -16,6 +16,10 @@
 #include "config.h"
 
 
+
+#include "stb_perlin.h"
+
+
 class Terrain {
   public:
     
@@ -42,13 +46,15 @@ class Terrain {
     
   private:
     
+    void createLandingSpot(int begin, int size);
+      
     typedef struct {
       MathLib::Point2 vertices[4];
     } Box;
     
-    std::vector<Box> boxes_;
-    int num_boxes_ = 100;
-    float box_width_;
+    std::vector<MathLib::Point2> points_;
+    int num_points_ = 500;
+    float point_width_;
 };
 
 #endif /* __TERRAIN_H__ */
