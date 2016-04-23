@@ -85,6 +85,7 @@ void Ship::move() {
     cpBodyApplyForceAtLocalPoint(physics_body_, force , impulse_point);
     fuel_ -= 0.1f;
     thrusting_ = true;
+    cpShapeSetMass(this->physics_shape_, 0.5 + this->fuel_/100);
   }
   
   if (ESAT::IsSpecialKeyPressed(ESAT::kSpecialKey_Right)) {
@@ -174,6 +175,7 @@ void Ship::setPhysics() {
   physics_body_ = cpSpaceAddBody(space_, cpBodyNew(0,0));
   
   cpShape* sbox = cpSpaceAddShape(space_, cpBoxShapeNew(physics_body_, 20, 20, 0));
+  physics_shape_ = sbox;
   
   cpPolyShape* poly =  cpPolyShapeAlloc();
   cpTransform transform;
@@ -199,7 +201,7 @@ void Ship::setPhysics() {
   
   cpShapeSetElasticity(sbox, 0);
   cpShapeSetFriction(sbox, 1.0f);
-  cpShapeSetMass(sbox, 1);
+  cpShapeSetMass(sbox, 0.5);
   
   cpVect position = {pos_.x, pos_.y};
   cpBodySetPosition(physics_body_, position);

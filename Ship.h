@@ -35,6 +35,7 @@ class Ship {
     cpSpace* space_;
     
     cpBody* physics_body_;
+    cpShape* physics_shape_;
     
     float fuel_;
     
