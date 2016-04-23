@@ -159,6 +159,8 @@ void startGame() {
   cpCollisionHandler* handler = cpSpaceAddDefaultCollisionHandler(g_space);
   handler->beginFunc = OnCollisionEnter;
   handler->userData = g_colliders;
+  
+  g_time = 0.0f;
 }
 
 
@@ -185,9 +187,10 @@ int ESAT::main(int argc, char **argv) {
     double delta = (tick - last_time) * 0.1f;
     last_time = ESAT::Time();
     
+    if (!g_ship->crashed_ && !g_ship->landed_)
+      g_time += delta/100;
+            
     cpSpaceStep(g_space, delta);
-    
-    
     
     g_ship->pos_.x = cpBodyGetPosition(g_ship->physics_body_).x;
     g_ship->pos_.y = cpBodyGetPosition(g_ship->physics_body_).y;
