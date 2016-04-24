@@ -78,7 +78,7 @@ void Terrain::generate() {
 
     /*********************/
     float pos_x = point_width_ * i;
-    float height = stb_perlin_noise3((i+1)/num_points_, (float)pos_x/50, randomness, 0, 0, 0);
+    float height = stb_perlin_noise3((i+1)/num_points_, (float)pos_x/100, randomness, 0, 0, 0);
     /*********************/
             
     bool landing_zone = false;

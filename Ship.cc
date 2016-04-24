@@ -35,30 +35,34 @@ void Ship::assignRegularPolygon(int num_vertices, float radius, MathLib::Vec2 po
 }
 
 
+void Ship::explode() {
+  explosion_time_++;
+  int num_particles = 20;
+  float x,y;
+  float angle = MathLib::rads(360/num_particles);
+
+  for (int i=0; i<num_particles; i++) {
+    x = pos_.x + cos(angle*i) * explosion_time_*2;
+    y = pos_.y + sin(angle*i) * explosion_time_*2;
+
+    ESAT::DrawSetStrokeColor(255,255,255);          
+    ESAT::DrawLine(x,y,x+2,y+2);
+
+    ESAT::DrawSetTextSize(40.0f);
+    ESAT::DrawText(kWinWidth/4, kWinHeight/3, "The module has crashed");
+    ESAT::DrawSetTextSize(20.0f);
+    ESAT::DrawText(kWinWidth/4, kWinHeight/2.5, "Press space to retry");
+  }
+}
+
+
 void Ship::update() {
   if (!landed_) {
     move();
   } else {
     if (crashed_) {
       if (exploding_) {
-        explosion_time_++;
-        int num_particles = 20;
-        float x,y;
-        float angle = MathLib::rads(360/num_particles);
-        
-        for (int i=0; i<num_particles; i++) {
-          x = pos_.x + cos(angle*i) * explosion_time_*2;
-          y = pos_.y + sin(angle*i) * explosion_time_*2;
-
-          ESAT::DrawSetStrokeColor(255,255,255);          
-          ESAT::DrawLine(x,y,x+2,y+2);
-          
-          ESAT::DrawSetTextSize(40.0f);
-          ESAT::DrawText(kWinWidth/4, kWinHeight/3, "The module has crashed");
-          ESAT::DrawSetTextSize(20.0f);
-          ESAT::DrawText(kWinWidth/4, kWinHeight/2.5, "Press space to retry");
-        }
-        
+        explode();
       } else {
         exploding_ = true;
         thrusting_ = false;
@@ -69,6 +73,8 @@ void Ship::update() {
       ESAT::DrawText(kWinWidth/4, kWinHeight/3, "The module has landed");
       ESAT::DrawSetTextSize(20.0f);
       ESAT::DrawText(kWinWidth/4, kWinHeight/2.5, "Press space to fly again");
+      
+      thrusting_ = false;
     }
   }
 }
@@ -205,4 +211,14 @@ void Ship::setPhysics() {
   
   cpVect position = {pos_.x, pos_.y};
   cpBodySetPosition(physics_body_, position);
+}
+
+
+void Ship::removePhysics() {
+  printf("REMOVING SHIP\n");
+  cpSpaceRemoveBody(cpBodyGetSpace(physics_body_), physics_body_);
+  //cpSpaceRemoveShape(cpBodyGetSpace(physics_body_), physics_shape_);
+
+  //cpShapeFree(physics_shape_);
+  //cpBodyFree(physics_body_);
 }

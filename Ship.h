@@ -21,11 +21,14 @@ class Ship {
     virtual ~Ship();
     
     void assignRegularPolygon(int num_vertices, float radius, MathLib::Vec2 position_offset, float rotation_offset, std::vector<MathLib::Vec2>& buffer, int* counter);
+    void explode();
     void update();
     void move();
+    void drive();
     void drawThruster();
     void draw();
     void setPhysics();
+    void removePhysics();
     
     MathLib::Vec2 pos_;
     MathLib::Vec2 velocity_;

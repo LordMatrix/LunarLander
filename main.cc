@@ -16,6 +16,7 @@
 #include "ESAT_extra/chipmunk/chipmunk.h"
  
 #include "config.h"
+#include "Vehicle.h"
 
 ESAT::SpriteHandle bg;
 
@@ -31,9 +32,11 @@ typedef struct {
   
 int g_score = 0;
 float g_time = 0.0f;
+bool g_just_landed;
 
 cpSpace* g_space = nullptr;
 Ship* g_ship = nullptr;
+Vehicle* g_vehicle = nullptr;
 Terrain* g_terrain = nullptr;
 Colliders* g_colliders = nullptr;
 
@@ -113,6 +116,14 @@ cpBool OnCollisionEnter(cpArbiter *arb, cpSpace *space, void *data) {
               landing = &terrain->landings_[i];
               printf("LANDING SHAPE FOUND\n");
               g_score += landing->points;
+              
+              //Mark ship to be removed
+              g_just_landed = true;
+              
+              //Create vehicle 
+              
+              
+              //Transfer controls to vehicle
             } 
           } 
         }
@@ -133,14 +144,17 @@ cpBool OnCollisionEnter(cpArbiter *arb, cpSpace *space, void *data) {
 void startGame() {
   srand(time(NULL));
   
+  g_just_landed = false;
+  
   g_space = cpSpaceNew();
   g_ship = new Ship();
+  g_vehicle = new Vehicle();
   g_terrain = new Terrain();
   g_colliders = (Colliders*)malloc(sizeof(Colliders));
   
-//  space = cpSpaceNew();
   cpSpaceSetGravity(g_space, cpv(0, 0.0098f));
-  
+
+  //Create Ship
   g_ship->space_ = g_space;
   MathLib::Vec2 offset = {0.0f, 0.0f};
   g_ship->assignRegularPolygon(20, 10, offset, 0, g_ship->cvertices_, &g_ship->num_cvertices_);
@@ -148,6 +162,14 @@ void startGame() {
   g_ship->assignRegularPolygon(3, 10, offset, 225, g_ship->tvertices_, &g_ship->num_tvertices_);
   g_ship->setPhysics();
   
+  
+  //Create Vehicle
+  g_vehicle->space_ = g_space;
+  g_vehicle->assignRectangle(g_vehicle->qvertices_, &g_vehicle->num_qvertices_);
+  g_vehicle->setPhysics();
+  
+  
+  //Create Terrain
   g_terrain->space_ = g_space;
   g_terrain->generate();
   g_terrain->createWalls();
@@ -159,9 +181,11 @@ void startGame() {
   cpCollisionHandler* handler = cpSpaceAddDefaultCollisionHandler(g_space);
   handler->beginFunc = OnCollisionEnter;
   handler->userData = g_colliders;
+
   
   g_time = 0.0f;
 }
+
 
 
 int ESAT::main(int argc, char **argv) {
@@ -194,6 +218,9 @@ int ESAT::main(int argc, char **argv) {
     
     g_ship->pos_.x = cpBodyGetPosition(g_ship->physics_body_).x;
     g_ship->pos_.y = cpBodyGetPosition(g_ship->physics_body_).y;
+    
+    g_vehicle->pos_.x = cpBodyGetPosition(g_vehicle->physics_body_).x;
+    g_vehicle->pos_.y = cpBodyGetPosition(g_vehicle->physics_body_).y;
     /*****************************************/
     
     if ((g_ship->exploding_ || g_ship->landed_)  && ESAT::IsSpecialKeyPressed(ESAT::kSpecialKey_Space)) {
@@ -205,13 +232,36 @@ int ESAT::main(int argc, char **argv) {
   
     ESAT::DrawSprite(bg, 0, 0);
     
-    g_ship->update();
+    if (false) {
+      
+      
+      
     
+      if (!g_ship->crashed_) {
+        if (!g_ship->landed_) {
+          g_ship->update();
+        } else {
+          if (g_just_landed) {
+            g_ship->removePhysics();
+            g_just_landed = false;
+          }
+          g_vehicle->update();
+        }
+      } else  {
+        g_ship->explode();
+      }
+    
+    
+    } else {
+      g_vehicle->update();
+    }
+    
+
     drawInfo(g_ship);
     
     g_terrain->draw();
     g_ship->draw();
-    
+    g_vehicle->draw();
     
     ESAT::DrawEnd();
     ESAT::WindowFrame();
