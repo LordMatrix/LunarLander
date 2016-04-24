@@ -232,36 +232,40 @@ int ESAT::main(int argc, char **argv) {
   
     ESAT::DrawSprite(bg, 0, 0);
     
-    if (false) {
+    
       
       
       
     
-      if (!g_ship->crashed_) {
-        if (!g_ship->landed_) {
-          g_ship->update();
-        } else {
-          if (g_just_landed) {
-            g_ship->removePhysics();
-            g_just_landed = false;
-          }
-          g_vehicle->update();
+    if (!g_ship->crashed_) {
+      if (!g_ship->landed_) {
+        g_ship->update();
+      } else {
+        if (g_just_landed) {
+          g_ship->removePhysics();
+          g_just_landed = false;
+          
+          cpVect position = {g_ship->pos_.x, g_ship->pos_.y};
+          cpBodySetPosition(g_vehicle->physics_body_, position);
         }
-      } else  {
-        g_ship->explode();
+        g_ship->update();
+        g_vehicle->update();
       }
-    
-    
-    } else {
-      g_vehicle->update();
+    } else  {
+      g_ship->explode();
     }
+    
+    
+    
     
 
     drawInfo(g_ship);
     
     g_terrain->draw();
     g_ship->draw();
-    g_vehicle->draw();
+    
+    if (g_ship->landed_ && !g_ship->crashed_)
+      g_vehicle->draw();
     
     ESAT::DrawEnd();
     ESAT::WindowFrame();

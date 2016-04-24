@@ -215,10 +215,9 @@ void Ship::setPhysics() {
 
 
 void Ship::removePhysics() {
-  printf("REMOVING SHIP\n");
   cpSpaceRemoveBody(cpBodyGetSpace(physics_body_), physics_body_);
-  //cpSpaceRemoveShape(cpBodyGetSpace(physics_body_), physics_shape_);
+  cpSpaceRemoveShape(cpShapeGetSpace(physics_shape_), physics_shape_);
 
-  //cpShapeFree(physics_shape_);
-  //cpBodyFree(physics_body_);
+  cpShapeFree(physics_shape_);
+//  cpBodyFree(physics_body_);
 }
