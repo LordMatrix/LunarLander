@@ -1,8 +1,9 @@
-#include "LRV.h"
+#include "../include/LRV.h"
 
 LRV::LRV() {
   pos_ = {400.0f, 200.0f};
   velocity_ = {0.25f, -1.0f};
+  locked_ = true;
 }
 
 
@@ -39,30 +40,32 @@ void LRV::update() {
 
 
 void LRV::move() {
-  cpShapeSetFriction(physics_shape_, 0.5f);
-  
-  if (ESAT::IsSpecialKeyPressed(ESAT::kSpecialKey_Right)) {
-    cpVect force = {0.01f, 0.0f};
-    cpVect impulse_point = {-5.0f, 0.0f};
-    cpBodyApplyForceAtLocalPoint(physics_body_, force , impulse_point);
-  } else if (ESAT::IsSpecialKeyPressed(ESAT::kSpecialKey_Left)) {
-    cpVect force = {-0.01f, 0.0f};
-    cpVect impulse_point = {5.0f, 0.0f};
-    cpBodyApplyForceAtLocalPoint(physics_body_, force , impulse_point);
-  }
-  
-  //Update speed components
-  velocity_.x = cpBodyGetVelocity(physics_body_).x;
-  velocity_.y = cpBodyGetVelocity(physics_body_).y;
-  
-  //Do not allow the vehicle to roll upside down
-  float rads = cpBodyGetAngle(physics_body_);
-  float angle = rads * (57.2957);
-  float threshold = 45.0f;
-  if (angle > threshold) {
-    cpBodySetAngle(physics_body_, 0.75f);
-  } else if (angle < -threshold) {
-    cpBodySetAngle(physics_body_, 0.75f);
+  if (!locked_) {
+    cpShapeSetFriction(physics_shape_, 0.5f);
+
+    if (ESAT::IsSpecialKeyPressed(ESAT::kSpecialKey_Right)) {
+      cpVect force = {0.03f, 0.0f};
+      cpVect impulse_point = {-5.0f, 0.0f};
+      cpBodyApplyForceAtLocalPoint(physics_body_, force , impulse_point);
+    } else if (ESAT::IsSpecialKeyPressed(ESAT::kSpecialKey_Left)) {
+      cpVect force = {-0.03f, 0.0f};
+      cpVect impulse_point = {5.0f, 0.0f};
+      cpBodyApplyForceAtLocalPoint(physics_body_, force , impulse_point);
+    }
+
+    //Update speed components
+    velocity_.x = cpBodyGetVelocity(physics_body_).x;
+    velocity_.y = cpBodyGetVelocity(physics_body_).y;
+
+    //Do not allow the vehicle to roll upside down
+    float rads = cpBodyGetAngle(physics_body_);
+    float angle = rads * (57.2957);
+    float threshold = 45.0f;
+    if (angle > threshold) {
+      cpBodySetAngle(physics_body_, 0.75f);
+    } else if (angle < -threshold) {
+      cpBodySetAngle(physics_body_, 0.75f);
+    }
   }
 }
 
@@ -101,7 +104,7 @@ void LRV::setPhysics() {
   physics_shape_ = sbox;
   
   cpPolyShape* poly =  cpPolyShapeAlloc();
-  cpTransform transform;
+  cpTransform transform = cpTransformNew(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
   cpVect verts[500];
   
   //Create triangle
@@ -116,6 +119,7 @@ void LRV::setPhysics() {
   cpShapeSetElasticity(sbox, 0);
   cpShapeSetFriction(sbox, 1.0f);
   cpShapeSetMass(sbox, 0.5);
+  cpShapeSetCollisionType(sbox, LRV_TYPE);
   
   cpVect position = {pos_.x, pos_.y};
   cpBodySetPosition(physics_body_, position);

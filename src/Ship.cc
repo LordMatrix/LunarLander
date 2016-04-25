@@ -1,4 +1,4 @@
-#include "Ship.h"
+#include "../include/Ship.h"
 
 Ship::Ship() {
   pos_ = {683.0f, 200.0f};
@@ -74,6 +74,7 @@ void Ship::update() {
   }
 }
 
+
 void Ship::move() {
   thrusting_ = false;
   
@@ -144,12 +145,12 @@ void Ship::draw() {
   
   //Draw circle
   for (int i=0; i<num_cvertices_; i++) {
-        ESAT::Mat3Multiply(translate, rotate, &transform);
-	vertex[0] = cvertices_[i].x;
-	vertex[1] = cvertices_[i].y;
-	ESAT::Mat3TransformVec2(transform, vertex, vertex_out);
-	vertices_out[2*i] = vertex_out[0];
-	vertices_out[2*i+1] = vertex_out[1];
+    ESAT::Mat3Multiply(translate, rotate, &transform);
+    vertex[0] = cvertices_[i].x;
+    vertex[1] = cvertices_[i].y;
+    ESAT::Mat3TransformVec2(transform, vertex, vertex_out);
+    vertices_out[2*i] = vertex_out[0];
+    vertices_out[2*i+1] = vertex_out[1];
   }
   ESAT::DrawSetStrokeColor(255,255,255);
   ESAT::DrawSolidPath(vertices_out, num_cvertices_, true);
@@ -157,12 +158,12 @@ void Ship::draw() {
   
   //Draw triangle
   for (int i=0; i<num_tvertices_; i++) {
-        ESAT::Mat3Multiply(translate, rotate, &transform);
-	vertex[0] = tvertices_[i].x;
-	vertex[1] = tvertices_[i].y;
-	ESAT::Mat3TransformVec2(transform, vertex, vertex_out);
-	vertices_out[2*i] = vertex_out[0];
-	vertices_out[2*i+1] = vertex_out[1];
+    ESAT::Mat3Multiply(translate, rotate, &transform);
+    vertex[0] = tvertices_[i].x;
+    vertex[1] = tvertices_[i].y;
+    ESAT::Mat3TransformVec2(transform, vertex, vertex_out);
+    vertices_out[2*i] = vertex_out[0];
+    vertices_out[2*i+1] = vertex_out[1];
   }
   ESAT::DrawSetStrokeColor(255,255,255);
   ESAT::DrawSolidPath(vertices_out, num_tvertices_, true);
@@ -172,10 +173,9 @@ void Ship::draw() {
   }
   
   //Draw explosion
-  if (crashed_)
+  if (crashed_) {
     explode();
-  
-  if (landed_) {
+  } else if (landed_) {
     ESAT::DrawSetTextSize(40.0f);
     ESAT::DrawText(kWinWidth/4, kWinHeight/3, "The module has landed");
     ESAT::DrawSetTextSize(20.0f);
@@ -191,7 +191,7 @@ void Ship::setPhysics() {
   physics_shape_ = sbox;
   
   cpPolyShape* poly =  cpPolyShapeAlloc();
-  cpTransform transform;
+  cpTransform transform = cpTransformNew(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
   cpVect verts[500];
   
   //Create circle
@@ -215,6 +215,7 @@ void Ship::setPhysics() {
   cpShapeSetElasticity(sbox, 0);
   cpShapeSetFriction(sbox, 1.0f);
   cpShapeSetMass(sbox, 0.5);
+  cpShapeSetCollisionType(sbox, SHIP_TYPE);
   
   cpVect position = {pos_.x, pos_.y};
   cpBodySetPosition(physics_body_, position);
@@ -226,5 +227,4 @@ void Ship::removePhysics() {
   cpSpaceRemoveShape(cpShapeGetSpace(physics_shape_), physics_shape_);
 
   cpShapeFree(physics_shape_);
-//  cpBodyFree(physics_body_);
 }

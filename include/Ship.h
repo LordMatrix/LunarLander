@@ -1,4 +1,4 @@
-/* Copyright 2015 Marcos Vazquez. All rights reserved.
+/* Copyright 2016 Marcos Vazquez. All rights reserved.
  *
  * Author: Marcos Vazquez <vazquezre@esat-alumni.es>
  *
@@ -47,23 +47,39 @@ class Ship: public Vehicle {
     
     
     void update() override;
+    
+    ///Listens to player input and updates ship position & acceleration
     void move() override;
+    
+    ///Draws a fire effect on the back of the ship
     void drawThruster();
+    
+    ///Draws the ship at its position & rotation
     void draw() override;
+    
+    ///Initializes physics simulation for this ship
     void setPhysics() override;
+    
+    ///Removes the ship body from the physics simulation
     void removePhysics();
     
+    ///Amount of fuel left
     float fuel_;
+    ///Whether or not the ship is burning fuel
     bool thrusting_;
     
+    ///Game status for this ship
     bool landed_;
     bool crashed_;
     
+    ///Time elapsed since the crashing explosion began
     float explosion_time_;
     
+    ///Vertices holding the circle geometry
     std::vector<MathLib::Vec2> cvertices_;
     int num_cvertices_;
     
+    ///Vertices holding the triangle geometry
     std::vector<MathLib::Vec2> tvertices_;
     int num_tvertices_;
 

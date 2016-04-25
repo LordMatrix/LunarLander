@@ -1,0 +1,32 @@
+LUNAR CRASHER
+------------------
+
+In this game, you must land a lunar module on the surface of an abrupt terrain. 
+The designated landing areas are flat surfaces with a number on them. You must land on top of the number or to its right.
+Coming in too fast, rotated on an excessive angle, or landing on any other area will cause your ship to crash.
+Once you have landed successfully, you can explore the area on a bouncy lunar rover. You cannot control the rover while it is on the air.
+Alternatively, you can just reach high speed and crash the module into oblivion.
+
+Controls:
+    On ship  ->  Left  - Rotate ship counterclockwise
+                 Right - Rotate ship clockwise
+                 Up    - Thrust ship forward
+    
+    On rover -> Left   - Move left
+                Right  - Move Right
+
+
+In addition to the required features, this game also includes the following:
+
+- Procedurally generated terrain using Perlin noise.
+- Infinitely scrollable terrain.
+- A bouncy lunar rover to explore the dark side of the moon.
+- A limited fuel level
+- The fuel counts towards the total weight. The less the fuel, the less resistance to thrusting.
+
+- Collisions are processed by pairs, so every possible pair of cpBodies has its own callback function.
+
+
+
+Marcos Vázquez Rey 
+ESAT 2016

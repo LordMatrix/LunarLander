@@ -1,4 +1,4 @@
-/* Copyright 2015 Marcos Vazquez. All rights reserved.
+/* Copyright 2016 Marcos Vazquez. All rights reserved.
  *
  * Author: Marcos Vazquez <vazquezre@esat-alumni.es>
  *
@@ -17,15 +17,15 @@
  
 #include <iostream>
 #include "time.h"
-#include "Ship.h"
+#include "../include/Ship.h"
 
 #define STB_PERLIN_IMPLEMENTATION
-#include "Terrain.h"
+#include "../include/Terrain.h"
  
 #include "ESAT_extra/chipmunk/chipmunk.h"
  
-#include "config.h"
-#include "LRV.h"
+#include "../include/config.h"
+#include "../include/LRV.h"
 
 ESAT::SpriteHandle bg;
 
@@ -78,15 +78,31 @@ void drawInfo(Ship* ship) {
 
 
 /**
- * @brief This gets called every time two cpBodies collide.
- * It updates the g_ship status if any of the colliders is said Ship.
+ * Gets called every time the Ship collides with non-landing terrain.
+  * Unspecified parameters are filled automatically by chipmunk.
+ * @param arb
+ * @param space   The physics simulation cpSpace
+ * @param data
+ * @return 
+ */
+cpBool OnCrashingCollisionEnter(cpArbiter *arb, cpSpace *space, void *data) {
+  g_ship->crashed_ = true;
+  g_ship->landed_ = true;
+  //If false, collision is interrupted
+  return cpTrue;
+}  
+
+
+/**
+ * @brief This gets called every time the Ship collides with landing terrain.
+ * It updates the g_ship status.
  * Unspecified parameters are filled automatically by chipmunk.
  * @param arb
  * @param space   The physics simulation cpSpace
  * @param data
  * @return 
  */
-cpBool OnCollisionEnter(cpArbiter *arb, cpSpace *space, void *data) {
+cpBool OnLandingCollisionEnter(cpArbiter *arb, cpSpace *space, void *data) {
   cpShape *a = NULL;
   cpShape *b = NULL;
   cpBody *c = NULL;
@@ -101,7 +117,7 @@ cpBool OnCollisionEnter(cpArbiter *arb, cpSpace *space, void *data) {
   Terrain* terrain = collider->terrain;
   
   //Order of colliders is undeterministic
-  if (!ship->landed_ && (ship->physics_body_ == c || ship->physics_body_ == d)) {
+  if (!ship->landed_ && !ship->crashed_) {
     cpBody* s = ship->physics_body_;
     cpVect velocity = cpBodyGetVelocity(s);
     cpVect rotation = cpBodyGetRotation(s);
@@ -121,31 +137,22 @@ cpBool OnCollisionEnter(cpArbiter *arb, cpSpace *space, void *data) {
     else printf("Ship is upside down\n");
     
     if (speed_ok && rotation_ok) {
-      cpCollisionType ta = cpShapeGetCollisionType(a);
-      cpCollisionType tb = cpShapeGetCollisionType(b);
-      
-      if (ta==LANDING_TYPE || tb==LANDING_TYPE) {
-        
-        Terrain::LandingSpot* landing = nullptr;
-          
-        //Check if terrain's box is a LandingSpot
-        for (int i=0; i < terrain->landings_.size() && landing==nullptr; i++) {
-          
-          for (int j=0; j < terrain->landings_[i].shapes.size() && landing==nullptr; j++) {
-          
-            if (terrain->landings_[i].shapes[j] == a || terrain->landings_[i].shapes[j] == b) {
-              landing = &terrain->landings_[i];
-              g_score += landing->points;
-              
-              //Mark ship to be removed
-              g_just_landed = true;
-            } 
+
+      Terrain::LandingSpot* landing = nullptr;
+
+      //Check if terrain's box is a LandingSpot
+      for (int i=0; i < terrain->landings_.size() && landing==nullptr; i++) {
+
+        for (int j=0; j < terrain->landings_[i].shapes.size() && landing==nullptr; j++) {
+
+          if (terrain->landings_[i].shapes[j] == a || terrain->landings_[i].shapes[j] == b) {
+            landing = &terrain->landings_[i];
+            g_score += landing->points;
+
+            //Mark ship to be removed
+            g_just_landed = true;
           } 
-        }
-        
-      } else {
-        //The ship tried to land somewhere other than a landing spot
-        ship->crashed_ = true;
+        } 
       }
     } else {
       //The ship is either going too fast or upside down
@@ -155,6 +162,66 @@ cpBool OnCollisionEnter(cpArbiter *arb, cpSpace *space, void *data) {
   
   //If false, collision is interrupted
   return cpTrue;
+}
+
+
+/**
+ * Gets called every time the LRV collides with any terrain.
+ * Locks the LRV controls, preventing player interaction-
+ * Unspecified parameters are filled automatically by chipmunk.
+ * @param arb
+ * @param space   The physics simulation cpSpace
+ * @param data
+ * @return 
+ */
+cpBool OnLRVCollisionEnter(cpArbiter *arb, cpSpace *space, void *data) {
+  g_lrv->locked_ = false;
+  return cpTrue;
+}
+
+
+/**
+ * Gets called every time the LRV ends collision (separates) from any terrain.
+ * Locks the LRV controls, preventing player interaction-
+ * Unspecified parameters are filled automatically by chipmunk.
+ * @param arb
+ * @param space   The physics simulation cpSpace
+ * @param data
+ * @return 
+ */
+void OnLRVCollisionExit(cpArbiter *arb, cpSpace *space, void *data) {
+  g_lrv->locked_ = true;
+}
+
+
+///Creates collision handlers for ship, lvr & terrain.
+void createCollisionHandlers() {
+  //Create landing collision
+  cpCollisionHandler* handler = cpSpaceAddCollisionHandler (g_space, SHIP_TYPE, LANDING_TYPE);
+  handler->beginFunc = OnLandingCollisionEnter;
+  handler->userData = g_colliders;
+
+  //Create crashing collision
+  handler = cpSpaceAddCollisionHandler (g_space, SHIP_TYPE, GROUND_TYPE);
+  handler->beginFunc = OnCrashingCollisionEnter;
+  handler->userData = g_colliders;
+
+  //Create LRV collisions
+  handler = cpSpaceAddCollisionHandler (g_space, LRV_TYPE, GROUND_TYPE);
+  handler->preSolveFunc = OnLRVCollisionEnter;
+  handler->userData = g_colliders;
+
+  handler = cpSpaceAddCollisionHandler (g_space, LRV_TYPE, GROUND_TYPE);
+  handler->separateFunc = OnLRVCollisionExit;
+  handler->userData = g_colliders;
+
+  handler = cpSpaceAddCollisionHandler (g_space, LRV_TYPE, LANDING_TYPE);
+  handler->preSolveFunc = OnLRVCollisionEnter;
+  handler->userData = g_colliders;
+
+  handler = cpSpaceAddCollisionHandler (g_space, LRV_TYPE, LANDING_TYPE);
+  handler->separateFunc = OnLRVCollisionExit;
+  handler->userData = g_colliders;
 }
 
 
@@ -197,11 +264,8 @@ void startGame() {
   g_colliders->ship = g_ship;
   g_colliders->terrain = g_terrain;
   
-  //Set up default collision handler
-  cpCollisionHandler* handler = cpSpaceAddDefaultCollisionHandler(g_space);
-  handler->beginFunc = OnCollisionEnter;
-  handler->userData = g_colliders;
-
+  
+  createCollisionHandlers();
   
   g_time = 0.0f;
 }
@@ -212,6 +276,8 @@ void startGame() {
  * @param delta   Milliseconds elapsed since the last update
  */
 void update(double delta) {
+  
+//    g_lrv->locked_ = true;
     cpSpaceStep(g_space, delta);
     
     g_ship->pos_.x = cpBodyGetPosition(g_ship->physics_body_).x;

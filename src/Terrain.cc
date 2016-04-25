@@ -1,5 +1,5 @@
-#include "Terrain.h"
-#include "Misc.h"
+#include "../include/Terrain.h"
+#include "../include/Misc.h"
 
 Terrain::Terrain() {
   
@@ -85,7 +85,7 @@ void Terrain::generate() {
   
   onscreen_point_width_ = (float)kWinWidth / (float)num_onscreen_points_;
   
-  int spots[] = {100, 250, 400};
+  int spots[] = {100, 350, 600, 850};
   
   for (int i=0; i < 3; i++) {
     
