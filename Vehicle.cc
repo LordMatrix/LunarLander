@@ -70,7 +70,7 @@ void Vehicle::drive() {
 void Vehicle::draw() {
   float rotation = cpBodyGetAngle(physics_body_);
   ESAT::Mat3 translate, rotate, transform;
-  ESAT::Mat3InitAsTranslate(pos_.x, pos_.y, &translate);
+  ESAT::Mat3InitAsTranslate(683.0f, pos_.y, &translate);
   ESAT::Mat3InitAsRotate(rotation, &rotate);
   
   //Calculate transformed vertices

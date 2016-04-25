@@ -257,33 +257,67 @@ int ESAT::main(int argc, char **argv) {
     }
     
     
-    //Scroll terrain
-    g_terrain->position_screen_ = g_ship->pos_.x -683.0f;
     
-    g_ship->update();
-    
-    g_terrain->scroll(g_ship->velocity_.x);
-    
-    
-    if (g_ship->pos_.x<0) {
-      g_ship->pos_.x = g_terrain->onscreen_point_width_ * g_terrain->num_terrain_points_;
-      cpBodySetPosition(g_ship->physics_body_, {g_ship->pos_.x, g_ship->pos_.y});
+    if (!g_ship->landed_ || g_ship->crashed_) {
+      //Scroll terrain
+      g_terrain->position_screen_ = g_ship->pos_.x -683.0f;
+
+      g_ship->update();
+
+      g_terrain->scroll(g_ship->velocity_.x);
+
+
+      if (g_ship->pos_.x<0) {
+        g_ship->pos_.x = g_terrain->onscreen_point_width_ * g_terrain->num_terrain_points_;
+        cpBodySetPosition(g_ship->physics_body_, {g_ship->pos_.x, g_ship->pos_.y});
+      }
+
+      //If ship's X exceeds map
+      float limit = g_terrain->onscreen_point_width_ * g_terrain->num_terrain_points_;
+      if (g_ship->pos_.x > limit) {
+        g_ship->pos_.x = 0;
+        cpBodySetPosition(g_ship->physics_body_, {g_ship->pos_.x, g_ship->pos_.y});
+      }
+      ESAT::DrawText(500.0f, 500.0f, ("Ship X: "+std::to_string(g_ship->pos_.x)).c_str());
+      
+      
+    } else {
+      
+      
+      //Scroll terrain
+      g_terrain->position_screen_ = g_vehicle->pos_.x -683.0f;
+
+      g_vehicle->update();
+
+      g_terrain->scroll(g_vehicle->velocity_.x);
+
+
+      if (g_vehicle->pos_.x<0) {
+        g_vehicle->pos_.x = g_terrain->onscreen_point_width_ * g_terrain->num_terrain_points_;
+        cpBodySetPosition(g_vehicle->physics_body_, {g_vehicle->pos_.x, g_vehicle->pos_.y});
+      }
+
+      //If ship's X exceeds map
+      float limit = g_terrain->onscreen_point_width_ * g_terrain->num_terrain_points_;
+      if (g_vehicle->pos_.x > limit) {
+        g_vehicle->pos_.x = 0;
+        cpBodySetPosition(g_vehicle->physics_body_, {g_vehicle->pos_.x, g_vehicle->pos_.y});
+      }
+      ESAT::DrawText(500.0f, 500.0f, ("Ship X: "+std::to_string(g_vehicle->pos_.x)).c_str());
     }
     
-    //If ship's X exceeds map
-    float limit = g_terrain->onscreen_point_width_ * g_terrain->num_terrain_points_;
-    if (g_ship->pos_.x > limit) {
-      g_ship->pos_.x = 0;
-      cpBodySetPosition(g_ship->physics_body_, {g_ship->pos_.x, g_ship->pos_.y});
-    }
-    
-    ESAT::DrawText(500.0f, 500.0f, ("Ship X: "+std::to_string(g_ship->pos_.x)).c_str());
     
     
 
     drawInfo(g_ship);
     
     g_terrain->draw();
+    
+    if (g_ship->landed_ && !g_ship->crashed_) {
+      float repos_index = g_terrain->position_index_*g_terrain->onscreen_point_width_;
+      printf("REPOS -> %f\n",repos_index);
+      g_ship->pos_.x  -= repos_index;
+    }
     g_ship->draw();
     
     if (g_ship->landed_ && !g_ship->crashed_)

@@ -42,7 +42,7 @@ void Ship::explode() {
   float angle = MathLib::rads(360/num_particles);
 
   for (int i=0; i<num_particles; i++) {
-    x = pos_.x + cos(angle*i) * explosion_time_*2;
+    x = 683.0f + cos(angle*i) * explosion_time_*2;
     y = pos_.y + sin(angle*i) * explosion_time_*2;
 
     ESAT::DrawSetStrokeColor(255,255,255);          
@@ -136,8 +136,13 @@ void Ship::drawThruster() {
 void Ship::draw() {
   float rotation = cpBodyGetAngle(physics_body_);
   ESAT::Mat3 translate, rotate, transform;
-  ESAT::Mat3InitAsTranslate(683.0f, pos_.y, &translate);
   ESAT::Mat3InitAsRotate(rotation+MathLib::rads(45), &rotate);
+  
+  if (!landed_ || crashed_) {
+    ESAT::Mat3InitAsTranslate(683.0f, pos_.y, &translate);
+  } else {
+    ESAT::Mat3InitAsTranslate(pos_.x, pos_.y, &translate);
+  }
   
   //Calculate transformed vertices
   float vertices_out[40];
