@@ -1,7 +1,7 @@
 #include "Ship.h"
 
 Ship::Ship() {
-  pos_ = {200.0f, 200.0f};
+  pos_ = {683.0f, 200.0f};
   velocity_ = {0.25f, -1.0f};
   fuel_ = 100.0f;
   landed_ = false;
@@ -68,6 +68,8 @@ void Ship::update() {
         thrusting_ = false;
         explosion_time_ = 0.0f;
       }
+      velocity_.x = cpBodyGetVelocity(physics_body_).x;
+      velocity_.y = cpBodyGetVelocity(physics_body_).y;
     } else {
       ESAT::DrawSetTextSize(40.0f);
       ESAT::DrawText(kWinWidth/4, kWinHeight/3, "The module has landed");
@@ -78,7 +80,6 @@ void Ship::update() {
     }
   }
 }
-
 
 void Ship::move() {
   thrusting_ = false;
@@ -109,7 +110,7 @@ void Ship::move() {
 void Ship::drawThruster() {
   float rotation = cpBodyGetAngle(physics_body_);
   ESAT::Mat3 translate, rotate, transform;
-  ESAT::Mat3InitAsTranslate(pos_.x, pos_.y, &translate);
+  ESAT::Mat3InitAsTranslate(683.0f, pos_.y, &translate);
   ESAT::Mat3InitAsRotate(rotation, &rotate);
   
   float vertices[6] = {-5.0f,5.0f, 5.0f,10.0f, 0.0f,35.0f};
@@ -135,7 +136,7 @@ void Ship::drawThruster() {
 void Ship::draw() {
   float rotation = cpBodyGetAngle(physics_body_);
   ESAT::Mat3 translate, rotate, transform;
-  ESAT::Mat3InitAsTranslate(pos_.x, pos_.y, &translate);
+  ESAT::Mat3InitAsTranslate(683.0f, pos_.y, &translate);
   ESAT::Mat3InitAsRotate(rotation+MathLib::rads(45), &rotate);
   
   //Calculate transformed vertices

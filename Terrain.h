@@ -38,11 +38,18 @@ class Terrain {
     void generate();
     
     void createWalls();
-    
+    void scroll(float amount);
     
     cpSpace* space_;
     
     std::vector<LandingSpot> landings_;
+    
+    int position_index_ = 0;
+    float position_screen_ = 0;
+    float onscreen_point_width_;
+    int num_onscreen_points_ = 500;
+    int num_terrain_points_ = 1000;
+    float terrain_point_width_;
     
   private:
     
@@ -53,8 +60,8 @@ class Terrain {
     } Box;
     
     std::vector<MathLib::Point2> points_;
-    int num_points_ = 500;
-    float point_width_;
+    
+    
 };
 
 #endif /* __TERRAIN_H__ */
