@@ -20,11 +20,6 @@ void Terrain::draw() {
   
   float pathpoints[5000];
   
-  
-  
-  int ta, tb;
-  
-  
   int i,k = 0;
   int inner_index;
   for (i=position_index_; i<num_onscreen_points_ + position_index_; i++) {
@@ -37,8 +32,6 @@ void Terrain::draw() {
     if (i >= num_terrain_points_) {
       x = k * onscreen_point_width_;
     }
-    
-    ta = x;
     
     pathpoints[(2*k)+0] = x;
     pathpoints[(2*k)+1] = points_[inner_index].y;
@@ -57,19 +50,12 @@ void Terrain::draw() {
     k++;
     
   }
-//ESAT::DrawText(300, 300, std::to_string(inner_index).c_str());
-//ESAT::DrawText(300, 400, std::to_string(ta).c_str());
-    
   //draw pathpoints
   ESAT::DrawPath(pathpoints, num_onscreen_points_);
 }
 
 
-void Terrain::scroll(float amount) {
-  position_screen_ += 0;
-  
-  
-  ESAT::DrawText(500.0f, 550.0f, ("Terrain X: "+std::to_string(position_screen_+683.0f)).c_str());
+void Terrain::scroll() {
   position_index_ = (int)(position_screen_ / onscreen_point_width_);
   
   
@@ -81,8 +67,6 @@ void Terrain::scroll(float amount) {
   //Correct negative screen positions
   if (position_index_ < 0)
     position_index_ = num_terrain_points_ + position_index_;
-  
-  ESAT::DrawText(500.0f, 600.0f, ("Pos index: "+std::to_string(position_index_)).c_str());
 }
 
 void Terrain::createLandingSpot(int begin, int size) {

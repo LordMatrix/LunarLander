@@ -38,7 +38,7 @@ class Terrain {
     void generate();
     
     void createWalls();
-    void scroll(float amount);
+    void scroll();
     
     cpSpace* space_;
     

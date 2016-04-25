@@ -6,7 +6,6 @@ Ship::Ship() {
   fuel_ = 100.0f;
   landed_ = false;
   crashed_ = false;
-  exploding_ = false;
   explosion_time_ = 0.0f;
 }
 
@@ -47,12 +46,12 @@ void Ship::explode() {
 
     ESAT::DrawSetStrokeColor(255,255,255);          
     ESAT::DrawLine(x,y,x+2,y+2);
-
-    ESAT::DrawSetTextSize(40.0f);
-    ESAT::DrawText(kWinWidth/4, kWinHeight/3, "The module has crashed");
-    ESAT::DrawSetTextSize(20.0f);
-    ESAT::DrawText(kWinWidth/4, kWinHeight/2.5, "Press space to retry");
   }
+  
+  ESAT::DrawSetTextSize(40.0f);
+  ESAT::DrawText(kWinWidth/4, kWinHeight/3, "The module has crashed");
+  ESAT::DrawSetTextSize(20.0f);
+  ESAT::DrawText(kWinWidth/4, kWinHeight/2.5, "Press space to retry");
 }
 
 
@@ -61,21 +60,15 @@ void Ship::update() {
     move();
   } else {
     if (crashed_) {
-      if (exploding_) {
+      if (crashed_) {
         explode();
       } else {
-        exploding_ = true;
         thrusting_ = false;
         explosion_time_ = 0.0f;
       }
       velocity_.x = cpBodyGetVelocity(physics_body_).x;
       velocity_.y = cpBodyGetVelocity(physics_body_).y;
     } else {
-      ESAT::DrawSetTextSize(40.0f);
-      ESAT::DrawText(kWinWidth/4, kWinHeight/3, "The module has landed");
-      ESAT::DrawSetTextSize(20.0f);
-      ESAT::DrawText(kWinWidth/4, kWinHeight/2.5, "Press space to fly again");
-      
       thrusting_ = false;
     }
   }
@@ -178,8 +171,16 @@ void Ship::draw() {
     drawThruster();
   }
   
-  //Draw orientation
-//  ESAT::DrawLine(pos_.x, pos_.y, pos_.x + 100 * cos(rotation+3.14/2), pos_.y + 100 * sin(rotation+3.14/2));
+  //Draw explosion
+  if (crashed_)
+    explode();
+  
+  if (landed_) {
+    ESAT::DrawSetTextSize(40.0f);
+    ESAT::DrawText(kWinWidth/4, kWinHeight/3, "The module has landed");
+    ESAT::DrawSetTextSize(20.0f);
+    ESAT::DrawText(kWinWidth/4, kWinHeight/2.5, "Press space to fly again");
+  }
 }
 
 

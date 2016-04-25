@@ -1,3 +1,12 @@
+/* Copyright 2015 Marcos Vazquez. All rights reserved.
+ *
+ * Author: Marcos Vazquez <vazquezre@esat-alumni.es>
+ *
+ * File:   main.cc               
+ * Lunar Lander fork with chipmunk physics
+ *
+ */
+
 //#ifndef WIN32
 //#define WIN32 1
 //#endif
@@ -16,7 +25,7 @@
 #include "ESAT_extra/chipmunk/chipmunk.h"
  
 #include "config.h"
-#include "Vehicle.h"
+#include "LRV.h"
 
 ESAT::SpriteHandle bg;
 
@@ -36,11 +45,16 @@ bool g_just_landed;
 
 cpSpace* g_space = nullptr;
 Ship* g_ship = nullptr;
+LRV* g_lrv = nullptr;
 Vehicle* g_vehicle = nullptr;
 Terrain* g_terrain = nullptr;
 Colliders* g_colliders = nullptr;
 
 
+/**
+ * @brief Draws numerical info about the game status
+ * @param ship  The current Ship to be examined
+ */
 void drawInfo(Ship* ship) {
 
   std::string score_str ("SCORE  "+std::to_string(g_score));
@@ -63,8 +77,16 @@ void drawInfo(Ship* ship) {
 }
 
 
+/**
+ * @brief This gets called every time two cpBodies collide.
+ * It updates the g_ship status if any of the colliders is said Ship.
+ * Unspecified parameters are filled automatically by chipmunk.
+ * @param arb
+ * @param space   The physics simulation cpSpace
+ * @param data
+ * @return 
+ */
 cpBool OnCollisionEnter(cpArbiter *arb, cpSpace *space, void *data) {
-  //Magic goes here
   cpShape *a = NULL;
   cpShape *b = NULL;
   cpBody *c = NULL;
@@ -103,7 +125,6 @@ cpBool OnCollisionEnter(cpArbiter *arb, cpSpace *space, void *data) {
       cpCollisionType tb = cpShapeGetCollisionType(b);
       
       if (ta==LANDING_TYPE || tb==LANDING_TYPE) {
-        printf("LANDING SPOT\n");
         
         Terrain::LandingSpot* landing = nullptr;
           
@@ -114,33 +135,32 @@ cpBool OnCollisionEnter(cpArbiter *arb, cpSpace *space, void *data) {
           
             if (terrain->landings_[i].shapes[j] == a || terrain->landings_[i].shapes[j] == b) {
               landing = &terrain->landings_[i];
-              printf("LANDING SHAPE FOUND\n");
               g_score += landing->points;
               
               //Mark ship to be removed
               g_just_landed = true;
-              
-              //Create vehicle 
-              
-              
-              //Transfer controls to vehicle
             } 
           } 
         }
         
       } else {
-        printf("CRASHED SOMEWHERE\n");
+        //The ship tried to land somewhere other than a landing spot
         ship->crashed_ = true;
       }
     } else {
+      //The ship is either going too fast or upside down
       ship->crashed_ = true;
     }
   }
   
-  return cpTrue; //If false, collision is interrupted
+  //If false, collision is interrupted
+  return cpTrue;
 }
 
 
+/**
+ * Initializes variables and sets the game to its initial status
+ */
 void startGame() {
   srand(time(NULL));
   
@@ -148,7 +168,7 @@ void startGame() {
   
   g_space = cpSpaceNew();
   g_ship = new Ship();
-  g_vehicle = new Vehicle();
+  g_lrv = new LRV();
   g_terrain = new Terrain();
   g_colliders = (Colliders*)malloc(sizeof(Colliders));
   
@@ -164,9 +184,9 @@ void startGame() {
   
   
   //Create Vehicle
-  g_vehicle->space_ = g_space;
-  g_vehicle->assignRectangle(g_vehicle->qvertices_, &g_vehicle->num_qvertices_);
-  g_vehicle->setPhysics();
+  g_lrv->space_ = g_space;
+  g_lrv->assignRectangle(g_lrv->qvertices_, &g_lrv->num_qvertices_);
+  g_lrv->setPhysics();
   
   
   //Create Terrain
@@ -187,7 +207,94 @@ void startGame() {
 }
 
 
+/**
+ * Updates the game status
+ * @param delta   Milliseconds elapsed since the last update
+ */
+void update(double delta) {
+    cpSpaceStep(g_space, delta);
+    
+    g_ship->pos_.x = cpBodyGetPosition(g_ship->physics_body_).x;
+    g_ship->pos_.y = cpBodyGetPosition(g_ship->physics_body_).y;
+    
+    g_lrv->pos_.x = cpBodyGetPosition(g_lrv->physics_body_).x;
+    g_lrv->pos_.y = cpBodyGetPosition(g_lrv->physics_body_).y;
+    /*****************************************/
+    
+    //Restart game if...
+    if ((g_ship->crashed_ || g_ship->landed_)  && ESAT::IsSpecialKeyPressed(ESAT::kSpecialKey_Space)) {
+      startGame();
+    }
+    
+    //Update ship according to its status
+    if (g_just_landed) {
+      g_ship->removePhysics();
+      g_just_landed = false;
+      g_ship->velocity_.x = 0;
 
+      cpVect position = {g_ship->pos_.x, g_ship->pos_.y};
+      cpBodySetPosition(g_lrv->physics_body_, position);
+    }
+    g_ship->update();
+    g_lrv->update();
+     
+    
+    if (!g_ship->landed_ || g_ship->crashed_) {
+      g_vehicle = static_cast<Ship*>(g_ship);
+    } else {
+      g_vehicle = static_cast<LRV*>(g_lrv);
+    }
+    
+    
+    //Scroll terrain
+    g_terrain->position_screen_ = g_vehicle->pos_.x - 683.0f;
+    g_terrain->scroll();
+
+    //Correct the ship's coordinates and make it loop through the terrain
+    if (g_vehicle->pos_.x<0) {
+      g_vehicle->pos_.x = g_terrain->onscreen_point_width_ * g_terrain->num_terrain_points_;
+      cpBodySetPosition(g_vehicle->physics_body_, {g_vehicle->pos_.x, g_vehicle->pos_.y});
+    }
+
+    //If ship's X exceeds map
+    float limit = g_terrain->onscreen_point_width_ * g_terrain->num_terrain_points_;
+    if (g_vehicle->pos_.x > limit) {
+      g_vehicle->pos_.x = 0;
+      cpBodySetPosition(g_vehicle->physics_body_, {g_vehicle->pos_.x, g_vehicle->pos_.y});
+    }
+    
+    //Correct static position of ship once it's landed
+    if (g_ship->landed_ && !g_ship->crashed_) {
+      float repos_index = g_terrain->position_index_*g_terrain->onscreen_point_width_;
+      g_ship->pos_.x  -= repos_index;
+    }
+}
+
+
+/**
+ * Draws the game status
+ */
+void draw() {
+  ESAT::DrawBegin();
+  ESAT::DrawClear(255,255,255);
+
+  ESAT::DrawSprite(bg, 0, 0);
+  drawInfo(g_ship);
+
+  g_terrain->draw();
+  g_ship->draw();
+
+  if (g_ship->landed_ && !g_ship->crashed_)
+    g_lrv->draw();
+
+  ESAT::DrawEnd();
+  ESAT::WindowFrame();
+}
+
+
+/**
+ * @brief The alpha and the omega 
+ */
 int ESAT::main(int argc, char **argv) {
   
   startGame();
@@ -200,9 +307,7 @@ int ESAT::main(int argc, char **argv) {
   ESAT::DrawSetTextFont("assets/font/medieval.ttf");
   ESAT::DrawSetTextSize(20);
   
-  double last_time = ESAT::Time();
-  
-  
+  static double last_time = ESAT::Time();
   
   while(ESAT::WindowIsOpened() && !ESAT::IsSpecialKeyDown(ESAT::kSpecialKey_Escape)) {
 
@@ -214,117 +319,8 @@ int ESAT::main(int argc, char **argv) {
     if (!g_ship->crashed_ && !g_ship->landed_)
       g_time += delta/100;
             
-    cpSpaceStep(g_space, delta);
-    
-    g_ship->pos_.x = cpBodyGetPosition(g_ship->physics_body_).x;
-    g_ship->pos_.y = cpBodyGetPosition(g_ship->physics_body_).y;
-    
-    g_vehicle->pos_.x = cpBodyGetPosition(g_vehicle->physics_body_).x;
-    g_vehicle->pos_.y = cpBodyGetPosition(g_vehicle->physics_body_).y;
-    /*****************************************/
-    
-    if ((g_ship->exploding_ || g_ship->landed_)  && ESAT::IsSpecialKeyPressed(ESAT::kSpecialKey_Space)) {
-      startGame();
-    }
-    
-    ESAT::DrawBegin();
-    ESAT::DrawClear(255,255,255);
-  
-    ESAT::DrawSprite(bg, 0, 0);
-    
-    
-      
-      
-      
-    
-    if (!g_ship->crashed_) {
-      if (!g_ship->landed_) {
-        g_ship->update();
-      } else {
-        if (g_just_landed) {
-          g_ship->removePhysics();
-          g_just_landed = false;
-          g_ship->velocity_.x = 0;
-          
-          cpVect position = {g_ship->pos_.x, g_ship->pos_.y};
-          cpBodySetPosition(g_vehicle->physics_body_, position);
-        }
-        g_ship->update();
-        g_vehicle->update();
-      }
-    } else  {
-      g_ship->explode();
-    }
-    
-    
-    
-    if (!g_ship->landed_ || g_ship->crashed_) {
-      //Scroll terrain
-      g_terrain->position_screen_ = g_ship->pos_.x -683.0f;
-
-      g_ship->update();
-
-      g_terrain->scroll(g_ship->velocity_.x);
-
-
-      if (g_ship->pos_.x<0) {
-        g_ship->pos_.x = g_terrain->onscreen_point_width_ * g_terrain->num_terrain_points_;
-        cpBodySetPosition(g_ship->physics_body_, {g_ship->pos_.x, g_ship->pos_.y});
-      }
-
-      //If ship's X exceeds map
-      float limit = g_terrain->onscreen_point_width_ * g_terrain->num_terrain_points_;
-      if (g_ship->pos_.x > limit) {
-        g_ship->pos_.x = 0;
-        cpBodySetPosition(g_ship->physics_body_, {g_ship->pos_.x, g_ship->pos_.y});
-      }
-      ESAT::DrawText(500.0f, 500.0f, ("Ship X: "+std::to_string(g_ship->pos_.x)).c_str());
-      
-      
-    } else {
-      
-      
-      //Scroll terrain
-      g_terrain->position_screen_ = g_vehicle->pos_.x -683.0f;
-
-      g_vehicle->update();
-
-      g_terrain->scroll(g_vehicle->velocity_.x);
-
-
-      if (g_vehicle->pos_.x<0) {
-        g_vehicle->pos_.x = g_terrain->onscreen_point_width_ * g_terrain->num_terrain_points_;
-        cpBodySetPosition(g_vehicle->physics_body_, {g_vehicle->pos_.x, g_vehicle->pos_.y});
-      }
-
-      //If ship's X exceeds map
-      float limit = g_terrain->onscreen_point_width_ * g_terrain->num_terrain_points_;
-      if (g_vehicle->pos_.x > limit) {
-        g_vehicle->pos_.x = 0;
-        cpBodySetPosition(g_vehicle->physics_body_, {g_vehicle->pos_.x, g_vehicle->pos_.y});
-      }
-      ESAT::DrawText(500.0f, 500.0f, ("Ship X: "+std::to_string(g_vehicle->pos_.x)).c_str());
-    }
-    
-    
-    
-
-    drawInfo(g_ship);
-    
-    g_terrain->draw();
-    
-    if (g_ship->landed_ && !g_ship->crashed_) {
-      float repos_index = g_terrain->position_index_*g_terrain->onscreen_point_width_;
-      printf("REPOS -> %f\n",repos_index);
-      g_ship->pos_.x  -= repos_index;
-    }
-    g_ship->draw();
-    
-    if (g_ship->landed_ && !g_ship->crashed_)
-      g_vehicle->draw();
-    
-    ESAT::DrawEnd();
-    ESAT::WindowFrame();
+    update(delta);
+    draw();
   }
   ESAT::WindowDestroy();
   return 0;
