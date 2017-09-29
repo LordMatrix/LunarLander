@@ -44,14 +44,14 @@ void Ship::explode() {
     x = 683.0f + cos(angle*i) * explosion_time_*2;
     y = pos_.y + sin(angle*i) * explosion_time_*2;
 
-    ESAT::DrawSetStrokeColor(255,255,255);          
-    ESAT::DrawLine(x,y,x+2,y+2);
+    MOMOS::DrawSetStrokeColor(255,255,255);          
+    MOMOS::DrawLine(x,y,x+2,y+2);
   }
   
-  ESAT::DrawSetTextSize(40.0f);
-  ESAT::DrawText(kWinWidth/4, kWinHeight/3, "The module has crashed");
-  ESAT::DrawSetTextSize(20.0f);
-  ESAT::DrawText(kWinWidth/4, kWinHeight/2.5, "Press space to retry");
+  MOMOS::DrawSetTextSize(40.0f);
+  MOMOS::DrawText(kWinWidth/4, kWinHeight/3, "The module has crashed");
+  MOMOS::DrawSetTextSize(20.0f);
+  MOMOS::DrawText(kWinWidth/4, kWinHeight/2.5, "Press space to retry");
 }
 
 
@@ -79,19 +79,19 @@ void Ship::move() {
   thrusting_ = false;
   
   //Listen for launch
-  if (ESAT::IsSpecialKeyPressed(ESAT::kSpecialKey_Up) && fuel_>0.0f) {
+  if (MOMOS::IsSpecialKeyPressed(MOMOS::kSpecialKey_Up) && fuel_>0.0f) {
     
     cpVect force = {0.0f, -0.02f};
     cpVect impulse_point = {0.0f, 5.0f};
     cpBodyApplyForceAtLocalPoint(physics_body_, force , impulse_point);
-    fuel_ -= 0.1f;
+    fuel_ -= 0.001f;
     thrusting_ = true;
     cpShapeSetMass(this->physics_shape_, 0.5 + this->fuel_/100);
   }
   
-  if (ESAT::IsSpecialKeyPressed(ESAT::kSpecialKey_Right)) {
+  if (MOMOS::IsSpecialKeyPressed(MOMOS::kSpecialKey_Right)) {
     cpBodySetAngle(physics_body_, cpBodyGetAngle(physics_body_) + 0.01f);
-  } else if (ESAT::IsSpecialKeyPressed(ESAT::kSpecialKey_Left)) {
+  } else if (MOMOS::IsSpecialKeyPressed(MOMOS::kSpecialKey_Left)) {
     cpBodySetAngle(physics_body_, cpBodyGetAngle(physics_body_) - 0.01f);
   }
   
@@ -103,11 +103,11 @@ void Ship::move() {
 
 void Ship::drawThruster() {
   float rotation = cpBodyGetAngle(physics_body_);
-  ESAT::Mat3 translate, rotate, transform;
-  ESAT::Mat3InitAsTranslate(683.0f, pos_.y, &translate);
-  ESAT::Mat3InitAsRotate(rotation, &rotate);
+  MOMOS::Mat3 translate, rotate, transform;
+  MOMOS::Mat3InitAsTranslate(683.0f, pos_.y, &translate);
+  MOMOS::Mat3InitAsRotate(rotation, &rotate);
   
-  float vertices[6] = {-5.0f,5.0f, 5.0f,10.0f, 0.0f,35.0f};
+  float vertices[6] = {-5.0f,10.0f, 5.0f,10.0f, 0.0f,35.0f};
   //Calculate transformed vertices
   float vertices_out[40];
   float vertex[2];
@@ -115,27 +115,27 @@ void Ship::drawThruster() {
   
   //Draw circle
   for (int i=0; i<6; i+=2) {
-        ESAT::Mat3Multiply(translate, rotate, &transform);
+        MOMOS::Mat3Multiply(translate, rotate, &transform);
 	vertex[0] = vertices[i];
 	vertex[1] = vertices[i+1];
-	ESAT::Mat3TransformVec2(transform, vertex, vertex_out);
+	MOMOS::Mat3TransformVec2(transform, vertex, vertex_out);
 	vertices_out[i] = vertex_out[0];
 	vertices_out[i+1] = vertex_out[1];
   }
-  ESAT::DrawSetStrokeColor(255,0,0);
-  ESAT::DrawSolidPath(vertices_out, 3, true);
+  MOMOS::DrawSetStrokeColor(255,0,0);
+  MOMOS::DrawSolidPath(vertices_out, 3, true);
 }
 
 
 void Ship::draw() {
   float rotation = cpBodyGetAngle(physics_body_);
-  ESAT::Mat3 translate, rotate, transform;
-  ESAT::Mat3InitAsRotate(rotation+MathLib::rads(45), &rotate);
+  MOMOS::Mat3 translate, rotate, transform;
+  MOMOS::Mat3InitAsRotate(rotation+MathLib::rads(45), &rotate);
   
   if (!landed_ || crashed_) {
-    ESAT::Mat3InitAsTranslate(683.0f, pos_.y, &translate);
+    MOMOS::Mat3InitAsTranslate(683.0f, pos_.y, &translate);
   } else {
-    ESAT::Mat3InitAsTranslate(pos_.x, pos_.y, &translate);
+    MOMOS::Mat3InitAsTranslate(pos_.x, pos_.y, &translate);
   }
   
   //Calculate transformed vertices
@@ -145,30 +145,30 @@ void Ship::draw() {
   
   //Draw circle
   for (int i=0; i<num_cvertices_; i++) {
-    ESAT::Mat3Multiply(translate, rotate, &transform);
+    MOMOS::Mat3Multiply(translate, rotate, &transform);
     vertex[0] = cvertices_[i].x;
     vertex[1] = cvertices_[i].y;
-    ESAT::Mat3TransformVec2(transform, vertex, vertex_out);
+    MOMOS::Mat3TransformVec2(transform, vertex, vertex_out);
     vertices_out[2*i] = vertex_out[0];
     vertices_out[2*i+1] = vertex_out[1];
   }
-  ESAT::DrawSetStrokeColor(255,255,255);
-  ESAT::DrawSolidPath(vertices_out, num_cvertices_, true);
+  MOMOS::DrawSetStrokeColor(255,255,255);
+  MOMOS::DrawSolidPath(vertices_out, num_cvertices_, true);
   
   
   //Draw triangle
   for (int i=0; i<num_tvertices_; i++) {
-    ESAT::Mat3Multiply(translate, rotate, &transform);
+    MOMOS::Mat3Multiply(translate, rotate, &transform);
     vertex[0] = tvertices_[i].x;
     vertex[1] = tvertices_[i].y;
-    ESAT::Mat3TransformVec2(transform, vertex, vertex_out);
+    MOMOS::Mat3TransformVec2(transform, vertex, vertex_out);
     vertices_out[2*i] = vertex_out[0];
     vertices_out[2*i+1] = vertex_out[1];
   }
-  ESAT::DrawSetStrokeColor(255,255,255);
-  ESAT::DrawSolidPath(vertices_out, num_tvertices_, true);
+  MOMOS::DrawSetStrokeColor(255,255,255);
+  MOMOS::DrawSolidPath(vertices_out, num_tvertices_, true);
   
-  if (thrusting_ && (int)ESAT::Time()%2==0) {
+  if (thrusting_ && (int)(MOMOS::Time()*1000)%5 != 0 && !crashed_) {
     drawThruster();
   }
   
@@ -176,10 +176,10 @@ void Ship::draw() {
   if (crashed_) {
     explode();
   } else if (landed_) {
-    ESAT::DrawSetTextSize(40.0f);
-    ESAT::DrawText(kWinWidth/4, kWinHeight/3, "The module has landed");
-    ESAT::DrawSetTextSize(20.0f);
-    ESAT::DrawText(kWinWidth/4, kWinHeight/2.5, "Press space to fly again");
+    MOMOS::DrawSetTextSize(40.0f);
+    MOMOS::DrawText(kWinWidth/4, kWinHeight/3, "The module has landed");
+    MOMOS::DrawSetTextSize(20.0f);
+    MOMOS::DrawText(kWinWidth/4, kWinHeight/2.5, "Press space to fly again");
   }
 }
 

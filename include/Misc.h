@@ -18,14 +18,14 @@
 #include <math.h>
 #include <vector>
 #include <cstdlib>
-#include <ESAT/sprite.h>
+#include <MOMOS/sprite.h>
 
 
 class Misc {
   
   public:
 
-    static ESAT::SpriteHandle GetSubImage(ESAT::SpriteHandle img, int x, int y, 
+    static MOMOS::SpriteHandle GetSubImage(MOMOS::SpriteHandle img, int x, int y, 
                                           int width, int height);
     static int random(int max);
     static int random(int min, int max);

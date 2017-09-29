@@ -11,9 +11,9 @@
 //#define WIN32 1
 //#endif
 
-#include "ESAT/window.h"
-#include "ESAT/draw.h"
-#include "ESAT/input.h"
+#include <MOMOS/window.h>
+#include <MOMOS/draw.h>
+#include <MOMOS/input.h>
  
 #include <iostream>
 #include "time.h"
@@ -22,12 +22,12 @@
 #define STB_PERLIN_IMPLEMENTATION
 #include "../include/Terrain.h"
  
-#include "ESAT_extra/chipmunk/chipmunk.h"
+#include <chipmunk/chipmunk.h>
  
 #include "../include/config.h"
 #include "../include/LRV.h"
 
-ESAT::SpriteHandle bg;
+MOMOS::SpriteHandle bg;
 
 struct {
   int width;
@@ -67,13 +67,13 @@ void drawInfo(Ship* ship) {
   hspeed_str += (ship->velocity_.x > 0.0f) ? "   >" : "   <";
   vspeed_str += (ship->velocity_.y > 0.0f) ? "   -" : "   +";
   
-  ESAT::DrawText(100.0f, 50.0f, score_str.c_str());
-  ESAT::DrawText(100.0f, 75.0f, time_str.c_str());
-  ESAT::DrawText(100.0f, 100.0f, fuel_str.c_str());
+  MOMOS::DrawText(100.0f, 50.0f, score_str.c_str());
+  MOMOS::DrawText(100.0f, 75.0f, time_str.c_str());
+  MOMOS::DrawText(100.0f, 100.0f, fuel_str.c_str());
   
-  ESAT::DrawText(800.0f, 50.0f, alt_str.c_str());
-  ESAT::DrawText(800.0f, 75.0f, hspeed_str.c_str());
-  ESAT::DrawText(800.0f, 100.0f, vspeed_str.c_str());
+  MOMOS::DrawText(800.0f, 50.0f, alt_str.c_str());
+  MOMOS::DrawText(800.0f, 75.0f, hspeed_str.c_str());
+  MOMOS::DrawText(800.0f, 100.0f, vspeed_str.c_str());
 }
 
 
@@ -288,7 +288,7 @@ void update(double delta) {
     /*****************************************/
     
     //Restart game if...
-    if ((g_ship->crashed_ || g_ship->landed_)  && ESAT::IsSpecialKeyPressed(ESAT::kSpecialKey_Space)) {
+    if ((g_ship->crashed_ || g_ship->landed_)  && MOMOS::IsSpecialKeyPressed(MOMOS::kSpecialKey_Space)) {
       startGame();
     }
     
@@ -341,10 +341,10 @@ void update(double delta) {
  * Draws the game status
  */
 void draw() {
-  ESAT::DrawBegin();
-  ESAT::DrawClear(255,255,255);
+  MOMOS::DrawBegin();
+  MOMOS::DrawClear(0,0,0);
 
-  ESAT::DrawSprite(bg, 0, 0);
+  MOMOS::DrawSprite(bg, 0, 0);
   drawInfo(g_ship);
 
   g_terrain->draw();
@@ -353,41 +353,42 @@ void draw() {
   if (g_ship->landed_ && !g_ship->crashed_)
     g_lrv->draw();
 
-  ESAT::DrawEnd();
-  ESAT::WindowFrame();
+  MOMOS::DrawEnd();
+  MOMOS::WindowFrame();
 }
 
 
 /**
  * @brief The alpha and the omega 
  */
-int ESAT::main(int argc, char **argv) {
+int main(int argc, char **argv) {
   
   startGame();
   
-  ESAT::WindowInit(WindowOptions.width, WindowOptions.height);
+  MOMOS::WindowInit(WindowOptions.width, WindowOptions.height);
   
-  bg = ESAT::SpriteFromFile("assets/img/sky.jpg");
+  bg = MOMOS::SpriteFromFile("assets/img/sky.jpg");
   
   //Init font
-  ESAT::DrawSetTextFont("assets/font/medieval.ttf");
-  ESAT::DrawSetTextSize(20);
+  //MOMOS::DrawSetTextFont("assets/font/medieval.ttf");
+  MOMOS::DrawSetTextFont("src/asteroids/assets/ca.ttf");
+  MOMOS::DrawSetTextSize(20);
   
-  static double last_time = ESAT::Time();
+  static double last_time = MOMOS::Time();
   
-  while(ESAT::WindowIsOpened() && !ESAT::IsSpecialKeyDown(ESAT::kSpecialKey_Escape)) {
+  while(MOMOS::WindowIsOpened() && !MOMOS::IsSpecialKeyDown(MOMOS::kSpecialKey_Escape)) {
 
     /****************SIMULATION****************/
-    double tick = ESAT::Time();
+    double tick = MOMOS::Time();
     double delta = (tick - last_time) * 0.1f;
-    last_time = ESAT::Time();
+    last_time = MOMOS::Time();
     
     if (!g_ship->crashed_ && !g_ship->landed_)
       g_time += delta/100;
             
-    update(delta);
+    update(delta*1000);
     draw();
   }
-  ESAT::WindowDestroy();
+  MOMOS::WindowDestroy();
   return 0;
 }

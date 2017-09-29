@@ -130,8 +130,8 @@ void MathLib::DrawVec2(Vec2 v, Point2 p) {
 	a = p;
 	initPoint2(&b, p.x + v.x, p.y + v.y);
 
-	ESAT::DrawSetStrokeColor(255, 255, 255, 255);
-	ESAT::DrawLine(a.x, a.y, b.x, b.y);
+	MOMOS::DrawSetStrokeColor(255, 255, 255, 255);
+	MOMOS::DrawLine(a.x, a.y, b.x, b.y);
 
 	perpendicularVec2(v, &pp);
 
@@ -152,10 +152,10 @@ void MathLib::printSquare(Point2 p, Vec2 vectors[4], float color[]) {
 	pathPoints[i + 1] = p.y + vectors[0].y;
 
 	/*Color rgb interior del pol�gono*/
-	ESAT::DrawSetStrokeColor(color[0], color[1], color[2], color[3]);
+	MOMOS::DrawSetStrokeColor(color[0], color[1], color[2], color[3]);
 
 	/*Pinta la misma figura rellena. El �ltimo par�metro determina si se muestra el borde*/
-	ESAT::DrawPath(pathPoints, 5);
+	MOMOS::DrawPath(pathPoints, 5);
 }
 
 
@@ -180,7 +180,7 @@ void MathLib::afineTransformFromPoint2(Point2 current, Mat2 m, Point2 origin, Po
 
 
 void MathLib::drawLine(Point2 p1, Point2 p2) {
-	ESAT::DrawLine(p1.x, p1.y, p2.x, p2.y);
+	MOMOS::DrawLine(p1.x, p1.y, p2.x, p2.y);
 }
 
 void MathLib::MultMat3(Mat3 m1, Mat3 m2, Mat3 *result) {}

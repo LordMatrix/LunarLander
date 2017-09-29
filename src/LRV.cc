@@ -43,11 +43,11 @@ void LRV::move() {
   if (!locked_) {
     cpShapeSetFriction(physics_shape_, 0.5f);
 
-    if (ESAT::IsSpecialKeyPressed(ESAT::kSpecialKey_Right)) {
+    if (MOMOS::IsSpecialKeyPressed(MOMOS::kSpecialKey_Right)) {
       cpVect force = {0.03f, 0.0f};
       cpVect impulse_point = {-5.0f, 0.0f};
       cpBodyApplyForceAtLocalPoint(physics_body_, force , impulse_point);
-    } else if (ESAT::IsSpecialKeyPressed(ESAT::kSpecialKey_Left)) {
+    } else if (MOMOS::IsSpecialKeyPressed(MOMOS::kSpecialKey_Left)) {
       cpVect force = {-0.03f, 0.0f};
       cpVect impulse_point = {5.0f, 0.0f};
       cpBodyApplyForceAtLocalPoint(physics_body_, force , impulse_point);
@@ -72,9 +72,9 @@ void LRV::move() {
 
 void LRV::draw() {
   float rotation = cpBodyGetAngle(physics_body_);
-  ESAT::Mat3 translate, rotate, transform;
-  ESAT::Mat3InitAsTranslate(683.0f, pos_.y, &translate);
-  ESAT::Mat3InitAsRotate(rotation, &rotate);
+  MOMOS::Mat3 translate, rotate, transform;
+  MOMOS::Mat3InitAsTranslate(683.0f, pos_.y, &translate);
+  MOMOS::Mat3InitAsRotate(rotation, &rotate);
   
   //Calculate transformed vertices
   float vertices_out[40];
@@ -84,15 +84,15 @@ void LRV::draw() {
   
   //Draw Quad
   for (int i=0; i<num_qvertices_; i++) {
-        ESAT::Mat3Multiply(translate, rotate, &transform);
+    MOMOS::Mat3Multiply(translate, rotate, &transform);
 	vertex[0] = qvertices_[i].x;
 	vertex[1] = qvertices_[i].y;
-	ESAT::Mat3TransformVec2(transform, vertex, vertex_out);
+	MOMOS::Mat3TransformVec2(transform, vertex, vertex_out);
 	vertices_out[2*i] = vertex_out[0];
 	vertices_out[2*i+1] = vertex_out[1];
   }
-  ESAT::DrawSetStrokeColor(255,255,255);
-  ESAT::DrawSolidPath(vertices_out, num_qvertices_, true);
+  MOMOS::DrawSetStrokeColor(255,255,255);
+  MOMOS::DrawSolidPath(vertices_out, num_qvertices_, true);
 }
 
 

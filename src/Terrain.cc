@@ -16,7 +16,7 @@ Terrain::~Terrain() {
 
 void Terrain::draw() {
   //draw boxes
-  ESAT::DrawSetStrokeColor(255,255,255,255);
+  MOMOS::DrawSetStrokeColor(255,255,255,255);
   
   float pathpoints[5000];
   
@@ -43,7 +43,7 @@ void Terrain::draw() {
         int y = points_[inner_index].y;
         
         std::string points = std::to_string(landings_[j].points);
-        ESAT::DrawText(x, y, points.c_str());
+        MOMOS::DrawText(x, y, points.c_str());
       }
     }
     
@@ -51,7 +51,7 @@ void Terrain::draw() {
     
   }
   //draw pathpoints
-  ESAT::DrawPath(pathpoints, num_onscreen_points_);
+  MOMOS::DrawPath(pathpoints, num_onscreen_points_);
 }
 
 
